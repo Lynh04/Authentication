@@ -1,0 +1,24 @@
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "thuylinh04@example.com",
+  "name": "thuylinh",
+  "password": "password1234",
+  "role": "user"
+}
+
+##
+
+### Login
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "thuylinh04@example.com",
+  "password": "password1234"
+}
+
+###
+GET http://localhost:3001/api/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDhmMDk4M2MzNTdmNDQ1M2E4ZTI2NSIsImlhdCI6MTc3NTgyNTA5MiwiZXhwIjoxNzc1OTExNDkyfQ.9KU_WDw-cvD70Mp2kxeRt61zhVVggjavOAHKY3gN3O4
