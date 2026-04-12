@@ -15,6 +15,7 @@ export const login = async (req, res) => {
         const data = await authService.loginUser(req.body);
         return success(res, 'Đăng nhập thành công', data);
     } catch (err) {
+        console.log(err);
         return error(res, 'Lỗi hệ thống', 500, err.message);
     }
 };

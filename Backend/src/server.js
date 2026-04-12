@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import connectDB from './config/db.js'; // Nhớ đuôi .js
 import authRoutes from './routes/authRoutes.js';
 // Load biến môi trường
@@ -7,8 +8,8 @@ dotenv.config();
 
 const app = express();
 
-// Middleware quan trọng: Giúp Express hiểu được dữ liệu JSON
-// Nếu thiếu dòng này, req.body sẽ bị undefined
+// Middleware quan trọng
+app.use(cors());
 app.use(express.json());
 
 // Kết nối Database
