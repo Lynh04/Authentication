@@ -1,16 +1,18 @@
 import admin from "firebase-admin";
-import fs from "fs";
-import path from "path";
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Lấy path tuyệt đối tới file service account
-const serviceAccountPath = path.join(import.meta.dirname, "../../auth-login-firebase.json");
+// Khởi tạo Firebase Admin bằng các biến môi trường
+const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '')
+  .replace(/\\n/g, '\n') // Chuyển đổi ký tự \n thoát thành dấu xuống dòng thật
+  .trim();
 
-// Đọc + parse file JSON chứa private key
-const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
-
-// Khởi tạo Firebase Admin bằng service account
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: privateKey,
+  }),
 });
 
 export default admin;
