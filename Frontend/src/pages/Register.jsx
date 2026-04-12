@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
+import { auth, googleProvider } from '../../firebase';
+import { signInWithPopup } from 'firebase/auth';
 import { apiFetch } from '@/lib/api';
 
 export function Register() {
@@ -32,6 +34,36 @@ export function Register() {
       navigate('/login');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      // 1. Authenticate with Firebase
+      const result = await signInWithPopup(auth, googleProvider);
+      
+      // 2. Get the Firebase ID token
+      const idToken = await result.user.getIdToken();
+
+      // 3. Send to backend
+      const data = await apiFetch('/auth/google-login', {
+        method: 'POST',
+        body: JSON.stringify({ token: idToken })
+      });
+
+      // Save the returned access token
+      localStorage.setItem('token', data.data.accessToken);
+
+      // Redirect to profile
+      navigate('/profile');
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Google Auth Failed');
     } finally {
       setLoading(false);
     }
@@ -111,7 +143,19 @@ export function Register() {
           </div>
         </form>
 
-        <p className="mt-8 text-center text-[14px] text-[#A297BE]">
+        <div className="mt-6 mb-6 relative flex items-center justify-center">
+          <div className="absolute w-full h-[1px] bg-[#3B3264]"></div>
+          <span className="relative px-4 text-[11px] text-[#6D638C] font-semibold uppercase tracking-wider bg-[#2A234E] z-10">Or continue with</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 mb-6">
+          <Button disabled={loading} type="button" onClick={handleGoogleLogin} variant="outline" className="bg-[#211B3D] border-transparent hover:bg-[#342A5C] text-[#CDC5DC] h-12 rounded-xl font-medium shadow-sm transition-colors border border-white/[0.02]">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-[18px] w-[18px] mr-2" />
+            Continue with Google
+          </Button>
+        </div>
+
+        <p className="mt-2 text-center text-[14px] text-[#A297BE]">
           Already have an account? <Link to="/login" className="text-[#E0C8FF] font-medium hover:text-white transition-colors">Login now</Link>
         </p>
       </div>

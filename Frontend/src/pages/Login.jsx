@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
+import { auth, googleProvider } from '../../firebase';
+import { signInWithPopup } from 'firebase/auth';
 import { apiFetch } from '@/lib/api';
 
 export function Login() {
@@ -23,7 +25,6 @@ export function Login() {
     setLoading(true);
 
     try {
-
       const data = await apiFetch('/auth/login', {
         method: 'POST',
         body: JSON.stringify(formData)
@@ -34,9 +35,38 @@ export function Login() {
 
       // Redirect to profile
       navigate('/profile');
-      window.location.reload(); // Quick way to force context to update if needed
+      // window.location.reload(); // Quick way to force context to update if needed
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      // 1. Authenticate with Firebase
+      const result = await signInWithPopup(auth, googleProvider);
+
+      // 2. Get the Firebase ID token
+      const idToken = await result.user.getIdToken();
+
+      // 3. Send to backend
+      const data = await apiFetch('/auth/google-login', {
+        method: 'POST',
+        body: JSON.stringify({ token: idToken })
+      });
+
+      // Save the returned access token
+      localStorage.setItem('token', data.data.accessToken);
+
+      // Redirect to profile
+      navigate('/profile');
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Google Login Failed');
     } finally {
       setLoading(false);
     }
@@ -113,7 +143,7 @@ export function Login() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="bg-[#211B3D] border-transparent hover:bg-[#342A5C] text-[#CDC5DC] h-12 rounded-xl font-medium shadow-sm transition-colors border border-white/[0.02]">
+          <Button disabled={loading} type="button" onClick={handleGoogleLogin} variant="outline" className="bg-[#211B3D] border-transparent hover:bg-[#342A5C] text-[#CDC5DC] h-12 rounded-xl font-medium shadow-sm transition-colors border border-white/[0.02]">
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-[18px] w-[18px] mr-2" />
             Google
           </Button>

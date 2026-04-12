@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { apiFetch } from '@/lib/api';
 
@@ -12,6 +15,9 @@ export function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({ name: '', email: '' });
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -27,6 +33,7 @@ export function Profile() {
         const data = await apiFetch('/auth/me');
 
         setUser(data.data);
+        setEditFormData({ name: data.data.name, email: data.data.email });
       } catch (err) {
         setError(err.message);
         // Fallback info instead of kicking user out for layout preview
@@ -44,6 +51,24 @@ export function Profile() {
     localStorage.removeItem('token');
     navigate('/login');
     window.location.reload();
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setUpdateLoading(true);
+    try {
+      const data = await apiFetch('/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify(editFormData),
+      });
+      setUser(data.data);
+      setIsEditModalOpen(false);
+      // Optional: success message
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUpdateLoading(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen bg-[#1F1B3E] flex items-center justify-center w-full"><div className="text-white">Loading...</div></div>;
@@ -66,8 +91,9 @@ export function Profile() {
         <div className="flex items-center gap-6 mb-10">
           <div className="relative">
             <Avatar className="h-[110px] w-[110px] border-[3px] border-[#3B2C5C] shadow-lg">
-              <AvatarImage src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300&auto=format&fit=crop" className="object-cover" />
-              <AvatarFallback>{user.name ? user.name.substring(0, 2).toUpperCase() : 'JD'}</AvatarFallback>
+              {/* <AvatarImage src={user.avatar ? user.avatar : "https://tse1.mm.bing.net/th/id/OIP.-ZqsoSSdtfK3CaCZy17bnwHaE7?rs=1&pid=ImgDetMain&o=7&rm=3"} className="object-cover" /> */}
+              {/* nếu user.avatar không có => dùng link image https://tse1.mm.bing.net/th/id/OIP.-ZqsoSSdtfK3CaCZy17bnwHaE7?rs=1&pid=ImgDetMain&o=7&rm=3 */}
+              <AvatarImage src={user.avatar ? user.avatar : "https://tse1.mm.bing.net/th/id/OIP.-ZqsoSSdtfK3CaCZy17bnwHaE7?rs=1&pid=ImgDetMain&o=7&rm=3"} className="object-cover" />
             </Avatar>
             <div className="absolute bottom-0 right-0 bg-[#A66CFF] rounded-full p-1 border-[3px] border-[#2A234E]">
               <CheckCircle2 className="h-[14px] w-[14px] text-white" />
@@ -127,9 +153,60 @@ export function Profile() {
         </div>
 
         <div className="flex justify-between items-center pt-2">
-          <Button className="bg-gradient-to-r from-[#D0A4FF] to-[#9955FF] hover:from-[#DFBEFF] hover:to-[#A76AFF] text-white h-11 px-8 rounded-xl font-medium transition-all shadow-[0_4px_14px_0_rgba(153,85,255,0.39)]">
-            Edit Profile
-          </Button>
+          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-[#D0A4FF] to-[#9955FF] hover:from-[#DFBEFF] hover:to-[#A76AFF] text-white h-11 px-8 rounded-xl font-medium transition-all shadow-[0_4px_14px_0_rgba(153,85,255,0.39)]">
+                Edit Profile
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#2A234E] border border-white/[0.1] text-[#F4EDFF] rounded-3xl max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">Edit Profile</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateProfile} className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name" className="text-[#8B80A5]">Full Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="bg-[#211B3D] border-transparent text-[#E0E0E0] h-12 rounded-xl"
+                    placeholder="Enter your name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email" className="text-[#8B80A5]">Email Address</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    className="bg-[#211B3D] border-transparent text-[#E0E0E0] h-12 rounded-xl"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="border-[#423164] bg-transparent text-[#CDC5DC] hover:bg-[#342A5C] rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateLoading}
+                    className="bg-gradient-to-r from-[#D0A4FF] to-[#9955FF] hover:from-[#DFBEFF] hover:to-[#A76AFF] text-white rounded-xl"
+                  >
+                    {updateLoading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
           <Button onClick={handleLogout} variant="outline" className="border-[#423164] bg-transparent text-[#CDC5DC] hover:bg-[#342A5C] hover:text-white h-11 px-6 rounded-xl font-medium flex items-center gap-2 transition-colors">
             <LogOut className="h-4 w-4" /> Logout
           </Button>
